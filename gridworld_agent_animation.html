@@ -1,0 +1,357 @@
+<div style="padding: 1rem 0;">
+  <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <label style="font-size: 13px; color: var(--color-text-secondary);">Vitesse</label>
+      <input type="range" min="100" max="1000" value="300" id="speedSlider" style="width: 120px;" />
+      <span style="font-size: 12px; color: var(--color-text-secondary); min-width: 30px;" id="speedLabel">300ms</span>
+    </div>
+    <button onclick="toggleAnimation()" id="toggleBtn" style="padding: 0.5rem 1rem; font-size: 13px;">▶ Démarrer</button>
+    <button onclick="resetAnimation()" style="padding: 0.5rem 1rem; font-size: 13px;">↻ Réinitialiser</button>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+    <!-- Q-Learning Grid -->
+    <div>
+      <h3 style="font-size: 14px; font-weight: 500; margin: 0 0 1rem 0; color: var(--color-text-primary);">Q-Learning (off-policy)</h3>
+      <svg id="gridQLearning" width="100%" height="280" viewBox="0 0 280 280" style="border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); background: var(--color-background-secondary);">
+        <defs>
+          <marker id="arrowQLearn" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,6 L9,3 z" fill="#0C447C" />
+          </marker>
+        </defs>
+      </svg>
+      <div style="margin-top: 0.75rem; display: flex; justify-content: space-between; font-size: 12px; color: var(--color-text-secondary);">
+        <span>Pas: <span id="stepsQLearning" style="font-weight: 500; color: var(--color-text-primary);">0</span></span>
+        <span>Récompense: <span id="rewardQLearning" style="font-weight: 500; color: var(--color-text-primary);">0</span></span>
+      </div>
+    </div>
+
+    <!-- SARSA Grid -->
+    <div>
+      <h3 style="font-size: 14px; font-weight: 500; margin: 0 0 1rem 0; color: var(--color-text-primary);">SARSA (on-policy)</h3>
+      <svg id="gridSARSA" width="100%" height="280" viewBox="0 0 280 280" style="border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); background: var(--color-background-secondary);">
+        <defs>
+          <marker id="arrowSARSA" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,6 L9,3 z" fill="#3B6D11" />
+          </marker>
+        </defs>
+      </svg>
+      <div style="margin-top: 0.75rem; display: flex; justify-content: space-between; font-size: 12px; color: var(--color-text-secondary);">
+        <span>Pas: <span id="stepsSARSA" style="font-weight: 500; color: var(--color-text-primary);">0</span></span>
+        <span>Récompense: <span id="rewardSARSA" style="font-weight: 500; color: var(--color-text-primary);">0</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics -->
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+    <div style="background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 1rem;">
+      <p style="font-size: 12px; color: var(--color-text-secondary); margin: 0 0 0.5rem 0;">Épisode</p>
+      <p style="font-size: 18px; font-weight: 500; margin: 0;" id="episodeCount">0</p>
+    </div>
+    <div style="background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 1rem;">
+      <p style="font-size: 12px; color: var(--color-text-secondary); margin: 0 0 0.5rem 0;">Epsilon (Q-Learn)</p>
+      <p style="font-size: 18px; font-weight: 500; margin: 0;" id="epsilonQLearning">0.10</p>
+    </div>
+    <div style="background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 1rem;">
+      <p style="font-size: 12px; color: var(--color-text-secondary); margin: 0 0 0.5rem 0;">Epsilon (SARSA)</p>
+      <p style="font-size: 18px; font-weight: 500; margin: 0;" id="epsilonSARSA">0.10</p>
+    </div>
+    <div style="background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 1rem;">
+      <p style="font-size: 12px; color: var(--color-text-secondary); margin: 0 0 0.5rem 0;">État</p>
+      <p style="font-size: 18px; font-weight: 500; margin: 0;" id="stateLabel">Prêt</p>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div style="margin-top: 1.5rem; padding: 1rem; background: var(--color-background-secondary); border-radius: var(--border-radius-md);">
+    <p style="font-size: 12px; font-weight: 500; color: var(--color-text-primary); margin: 0 0 0.75rem 0;">Légende</p>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; font-size: 12px; color: var(--color-text-secondary);">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="width: 20px; height: 20px; background: #E6F1FB; border: 0.5px solid #0C447C; border-radius: 2px;"></div>
+        <span>Départ (Q-Learn)</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="width: 20px; height: 20px; background: #EAF3DE; border: 0.5px solid #3B6D11; border-radius: 2px;"></div>
+        <span>Départ (SARSA)</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="width: 20px; height: 20px; background: #F5F5F5; border: 0.5px solid #888780; border-radius: 2px;"></div>
+        <span>Chemin exploré</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="width: 20px; height: 20px; background: #FCEBEB; border: 0.5px solid #A32D2D; border-radius: 2px;"></div>
+        <span>Objectif</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="width: 20px; height: 20px; background: #85B7EB; border-radius: 50%;"></div>
+        <span>Agent Q-Learn</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="width: 20px; height: 20px; background: #97C459; border-radius: 50%;"></div>
+        <span>Agent SARSA</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const GRID_SIZE = 10;
+  const START = { x: 0, y: 0 };
+  const GOAL = { x: 9, y: 9 };
+  const WALLS = [
+    {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 3}, {x: 4, y: 4},
+    {x: 3, y: 2}, {x: 3, y: 1}, {x: 5, y: 5}, {x: 5, y: 0},
+    {x: 6, y: 1}, {x: 6, y: 2}, {x: 6, y: 3},
+    {x: 8, y: 9}, {x: 8, y: 8}, {x: 8, y: 7}, {x: 8, y: 6},
+    {x: 8, y: 5}, {x: 8, y: 4}, {x: 8, y: 3}, {x: 8, y: 2},
+  ];
+
+  let state = {
+    episodeQLearning: 0,
+    stepsQLearning: 0,
+    rewardQLearning: 0,
+    epsilonQLearning: 0.9,
+    
+    episodeSARSA: 0,
+    stepsSARSA: 0,
+    rewardSARSA: 0,
+    epsilonSARSA: 0.9,
+    
+    posQLearning: { x: 0, y: 0 },
+    posSARSA: { x: 0, y: 0 },
+    
+    pathQLearning: [],
+    pathSARSA: [],
+    
+    isRunning: false
+  };
+
+  function initGrid(svgId) {
+    const svg = document.getElementById(svgId);
+    svg.innerHTML = '';
+    
+    const cellSize = 28;
+    
+    for (let y = 0; y < GRID_SIZE; y++) {
+      for (let x = 0; x < GRID_SIZE; x++) {
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', x * cellSize);
+        rect.setAttribute('y', y * cellSize);
+        rect.setAttribute('width', cellSize);
+        rect.setAttribute('height', cellSize);
+        
+        const isWall = WALLS.some(w => w.x === x && w.y === y);
+        const isGoal = x === GOAL.x && y === GOAL.y;
+        const isStart = x === START.x && y === START.y;
+        
+        if (isWall) {
+          rect.setAttribute('fill', '#D3D1C7');
+        } else if (isGoal) {
+          rect.setAttribute('fill', '#F09595');
+        } else if (isStart) {
+          rect.setAttribute('fill', svgId === 'gridQLearning' ? '#B5D4F4' : '#C0DD97');
+        } else {
+          rect.setAttribute('fill', '#FFFFFF');
+        }
+        rect.setAttribute('stroke', '#CCCCCC');
+        rect.setAttribute('stroke-width', '0.5');
+        svg.appendChild(rect);
+      }
+    }
+  }
+
+  function drawAgent(svgId, pos, color) {
+    const svg = document.getElementById(svgId);
+    const cellSize = 28;
+    
+    const existing = svg.querySelector('circle.agent');
+    if (existing) existing.remove();
+    
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', pos.x * cellSize + cellSize / 2);
+    circle.setAttribute('cy', pos.y * cellSize + cellSize / 2);
+    circle.setAttribute('r', cellSize / 3);
+    circle.setAttribute('fill', color);
+    circle.setAttribute('class', 'agent');
+    circle.setAttribute('opacity', '0.9');
+    svg.appendChild(circle);
+  }
+
+  function drawPath(svgId, path, color) {
+    const svg = document.getElementById(svgId);
+    const cellSize = 28;
+    
+    const existing = svg.querySelectorAll('line.path');
+    existing.forEach(e => e.remove());
+    
+    for (let i = 0; i < path.length - 1; i++) {
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', path[i].x * cellSize + cellSize / 2);
+      line.setAttribute('y1', path[i].y * cellSize + cellSize / 2);
+      line.setAttribute('x2', path[i + 1].x * cellSize + cellSize / 2);
+      line.setAttribute('y2', path[i + 1].y * cellSize + cellSize / 2);
+      line.setAttribute('stroke', color);
+      line.setAttribute('stroke-width', '1');
+      line.setAttribute('opacity', '0.4');
+      line.setAttribute('class', 'path');
+      svg.appendChild(line);
+    }
+  }
+
+  function isValidMove(pos) {
+    return pos.x >= 0 && pos.x < GRID_SIZE && pos.y >= 0 && pos.y < GRID_SIZE &&
+           !WALLS.some(w => w.x === pos.x && w.y === pos.y);
+  }
+
+  function getRandomAction() {
+    const actions = [
+      {x: 0, y: -1}, // up
+      {x: 0, y: 1},  // down
+      {x: -1, y: 0}, // left
+      {x: 1, y: 0}   // right
+    ];
+    return actions[Math.floor(Math.random() * actions.length)];
+  }
+
+  function getGreedyAction(pos, epsilon) {
+    if (Math.random() < epsilon) {
+      return getRandomAction();
+    }
+    
+    const actions = [
+      {x: 0, y: -1},
+      {x: 0, y: 1},
+      {x: -1, y: 0},
+      {x: 1, y: 0}
+    ];
+    
+    // Heuristique simple : direction vers le but
+    let best = actions[0];
+    let bestDist = Math.abs(pos.x + best.x - GOAL.x) + Math.abs(pos.y + best.y - GOAL.y);
+    
+    for (let action of actions) {
+      const newPos = { x: pos.x + action.x, y: pos.y + action.y };
+      if (!isValidMove(newPos)) continue;
+      
+      const dist = Math.abs(newPos.x - GOAL.x) + Math.abs(newPos.y - GOAL.y);
+      if (dist < bestDist) {
+        best = action;
+        bestDist = dist;
+      }
+    }
+    return best;
+  }
+
+  function step() {
+    // Q-Learning step
+    const actionQL = getGreedyAction(state.posQLearning, state.epsilonQLearning);
+    const newPosQL = { x: state.posQLearning.x + actionQL.x, y: state.posQLearning.y + actionQL.y };
+    
+    if (isValidMove(newPosQL)) {
+      state.posQLearning = newPosQL;
+      state.pathQLearning.push({...newPosQL});
+      state.stepsQLearning++;
+      state.rewardQLearning -= 1;
+      
+      if (newPosQL.x === GOAL.x && newPosQL.y === GOAL.y) {
+        state.rewardQLearning += 100;
+        state.episodeQLearning++;
+        state.epsilonQLearning = Math.max(0.1, state.epsilonQLearning - 0.01);
+        state.posQLearning = { x: 0, y: 0 };
+        state.pathQLearning = [];
+        state.stepsQLearning = 0;
+      }
+    }
+
+    // SARSA step
+    const actionSARSA = getGreedyAction(state.posSARSA, state.epsilonSARSA);
+    const newPosSARSA = { x: state.posSARSA.x + actionSARSA.x, y: state.posSARSA.y + actionSARSA.y };
+    
+    if (isValidMove(newPosSARSA)) {
+      state.posSARSA = newPosSARSA;
+      state.pathSARSA.push({...newPosSARSA});
+      state.stepsSARSA++;
+      state.rewardSARSA -= 1;
+      
+      if (newPosSARSA.x === GOAL.x && newPosSARSA.y === GOAL.y) {
+        state.rewardSARSA += 100;
+        state.episodeSARSA++;
+        state.epsilonSARSA = Math.max(0.1, state.epsilonSARSA - 0.01);
+        state.posSARSA = { x: 0, y: 0 };
+        state.pathSARSA = [];
+        state.stepsSARSA = 0;
+      }
+    }
+
+    updateUI();
+  }
+
+  function updateUI() {
+    document.getElementById('stepsQLearning').textContent = state.stepsQLearning;
+    document.getElementById('rewardQLearning').textContent = Math.round(state.rewardQLearning);
+    document.getElementById('epsilonQLearning').textContent = state.epsilonQLearning.toFixed(2);
+    document.getElementById('episodeCount').textContent = Math.max(state.episodeQLearning, state.episodeSARSA);
+
+    document.getElementById('stepsSARSA').textContent = state.stepsSARSA;
+    document.getElementById('rewardSARSA').textContent = Math.round(state.rewardSARSA);
+    document.getElementById('epsilonSARSA').textContent = state.epsilonSARSA.toFixed(2);
+
+    drawPath('gridQLearning', state.pathQLearning, '#0C447C');
+    drawAgent('gridQLearning', state.posQLearning, '#378ADD');
+    
+    drawPath('gridSARSA', state.pathSARSA, '#3B6D11');
+    drawAgent('gridSARSA', state.posSARSA, '#639922');
+  }
+
+  function toggleAnimation() {
+    state.isRunning = !state.isRunning;
+    const btn = document.getElementById('toggleBtn');
+    btn.textContent = state.isRunning ? '⏸ Pause' : '▶ Démarrer';
+    document.getElementById('stateLabel').textContent = state.isRunning ? 'En cours' : 'Paused';
+    
+    if (state.isRunning) animate();
+  }
+
+  function resetAnimation() {
+    state = {
+      episodeQLearning: 0,
+      stepsQLearning: 0,
+      rewardQLearning: 0,
+      epsilonQLearning: 0.9,
+      episodeSARSA: 0,
+      stepsSARSA: 0,
+      rewardSARSA: 0,
+      epsilonSARSA: 0.9,
+      posQLearning: { x: 0, y: 0 },
+      posSARSA: { x: 0, y: 0 },
+      pathQLearning: [],
+      pathSARSA: [],
+      isRunning: false
+    };
+    
+    initGrid('gridQLearning');
+    initGrid('gridSARSA');
+    updateUI();
+    document.getElementById('toggleBtn').textContent = '▶ Démarrer';
+    document.getElementById('stateLabel').textContent = 'Prêt';
+  }
+
+  function animate() {
+    const speed = parseInt(document.getElementById('speedSlider').value);
+    
+    if (state.isRunning) {
+      step();
+      setTimeout(animate, speed);
+    }
+  }
+
+  document.getElementById('speedSlider').addEventListener('input', (e) => {
+    document.getElementById('speedLabel').textContent = e.target.value + 'ms';
+  });
+
+  // Initialize
+  initGrid('gridQLearning');
+  initGrid('gridSARSA');
+  updateUI();
+</script>
